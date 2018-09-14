@@ -30,6 +30,7 @@ public class BsRemote {
   public void send(byte[] bytes) {
     try {
       sendChannel.send(ByteBuffer.wrap(bytes), addr);
+//      BsLogger.debug(() -> "send:" + addr);
     } catch (IOException e) {
       e.printStackTrace();
     }

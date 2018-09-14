@@ -53,17 +53,21 @@ public class BsExecutorServer {
     }
 
     serviceSelect = Executors.newFixedThreadPool(1);
-    serviceCallback = Executors.newWorkStealingPool();
+    serviceCallback = Executors.newCachedThreadPool();
     serviceSelect.submit(() -> {
       while (true) {
         try {
           if (selector.select() > 0) {
             Set<SelectionKey> keys = selector.selectedKeys();
-            for (SelectionKey key : keys) {
+//            for (SelectionKey key : keys) {
+            for(Iterator<SelectionKey> it = keys.iterator(); it.hasNext(); ) {
+              SelectionKey key = it.next();
+              it.remove();
+
+              BsLogger.debug("key is -> " + key);
               DatagramChannel localChannel = (DatagramChannel) key.channel();
               ByteBuffer buffer = ByteBuffer.allocate(64);
-              InetSocketAddress addr = (InetSocketAddress) localChannel.receive(buffer);
-//              addr.getAddress().getHostAddress()
+              SocketAddress addr = localChannel.receive(buffer);
 
               BsLocal local = localMaps.get(localChannel);
               if (local == null) {
@@ -98,6 +102,8 @@ public class BsExecutorServer {
 
     serviceCallback.shutdown();
     serviceSelect.shutdown();
+
+    BsLogger.info("server shutdown");
   }
 
   public class BsExecutorServerException extends Exception {

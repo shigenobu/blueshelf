@@ -6,6 +6,14 @@ public class BsLogger {
 
   private static boolean verbose = true;
 
+  static void error(Object message) {
+    out("E", message);
+  }
+
+  static void info(Object message) {
+    out("I", message);
+  }
+
   static void debug(Object message) {
     out("D", message);
   }
@@ -15,10 +23,6 @@ public class BsLogger {
       return;
     }
     out("D", message.get());
-  }
-
-  static void error(Object message) {
-    out("E", message);
   }
 
   private static void out(String level, Object message) {

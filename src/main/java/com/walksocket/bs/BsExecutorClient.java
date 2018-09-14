@@ -86,5 +86,7 @@ public class BsExecutorClient {
 
     serviceCallback.shutdown();
     serviceSelect.shutdown();
+
+    BsLogger.info("client shutdown");
   }
 }
