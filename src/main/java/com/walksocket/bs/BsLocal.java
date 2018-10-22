@@ -2,58 +2,118 @@ package com.walksocket.bs;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.net.StandardProtocolFamily;
 import java.net.StandardSocketOptions;
-import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
-import java.nio.channels.Selector;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
+/**
+ * udp local configuration.
+ * @author shigenobu
+ * @version 0.0.1
+ *
+ */
 public class BsLocal {
 
-  private SocketAddress addr;
+  /**
+   * binding local address.
+   */
+  private InetSocketAddress localAddr;
 
+  /**
+   * udp receive channel.
+   */
   private DatagramChannel receiveChannel;
 
+  /**
+   * udp send channel.
+   * <pre>
+   *   if client, receive channel is equal to send channel.
+   *   if server, receive channel is not equal to send channel.
+   * </pre>
+   */
   private DatagramChannel sendChannel;
 
-
-  public BsLocal(String host, int port) {
+  /**
+   * constructor.
+   * @param host host
+   * @param port port
+   * @throws BsLocalException local excepiton
+   */
+  public BsLocal(String host, int port) throws BsLocalException {
     try {
-      addr = new InetSocketAddress(host, port);
+      localAddr = new InetSocketAddress(host, port);
       receiveChannel = DatagramChannel.open(StandardProtocolFamily.INET);
-      receiveChannel.bind(addr);
+      receiveChannel.bind(localAddr);
       receiveChannel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
       receiveChannel.configureBlocking(false);
+
+      // At first, receive channel is equal to send channel.
       sendChannel = receiveChannel;
     } catch (IOException e) {
-      e.printStackTrace();
+      BsLogger.error(e);
+      throw new BsLocalException(e);
     }
   }
 
-  void setupSendChannel() {
+  /**
+   * setup send channel.
+   * <pre>
+   *   for server, channels are force to different between receive and send.
+   * </pre>
+   * @throws BsLocalException local excepiton
+   */
+  void setupSendChannel() throws BsLocalException {
     try {
       sendChannel = DatagramChannel.open(StandardProtocolFamily.INET);
       sendChannel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
       sendChannel.configureBlocking(false);
     } catch (IOException e) {
-      e.printStackTrace();
+      BsLogger.error(e);
+      throw new BsLocalException(e);
     }
   }
 
-  public SocketAddress getAddr() {
-    return addr;
-  }
-
-  public DatagramChannel getReceiveChannel() {
+  /**
+   * get receive channel.
+   * @return receive channel
+   */
+  DatagramChannel getReceiveChannel() {
     return receiveChannel;
   }
 
-  public DatagramChannel getSendChannel() {
+  /**
+   * get send channel.
+   * @return
+   */
+  DatagramChannel getSendChannel() {
     return sendChannel;
+  }
+
+  /**
+   * get local address.
+   * @return local address
+   */
+  InetSocketAddress getLocalAddr() {
+    return localAddr;
+  }
+
+  /**
+   * local exception.
+   * @author shigenobu
+   */
+  public class BsLocalException extends Exception {
+
+    /**
+     * version.
+     */
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * constructor.
+     * @param e error
+     */
+    private BsLocalException(Throwable e) {
+      super(e);
+    }
   }
 }

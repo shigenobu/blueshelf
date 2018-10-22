@@ -2,39 +2,88 @@ package com.walksocket.bs;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.StandardProtocolFamily;
-import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
+/**
+ * udp remote configuration.
+ * @author shigenobu
+ * @version 0.0.1
+ *
+ */
 public class BsRemote {
 
-  public SocketAddress addr;
+  /**
+   * sending remote address.
+   */
+  private InetSocketAddress remoteAddr;
 
+  /**
+   * udp send channel.
+   */
   private DatagramChannel sendChannel;
 
-
-  public BsRemote(SocketAddress addr, DatagramChannel sendChannel) {
-    this.addr = addr;
+  /**
+   * constructor.
+   * @param remoteAddr remote address
+   * @param sendChannel send channel
+   */
+  public BsRemote(InetSocketAddress remoteAddr, DatagramChannel sendChannel) {
+    this.remoteAddr = remoteAddr;
     this.sendChannel = sendChannel;
-    BsLogger.debug(() -> "addr:" + sendChannel);
   }
 
-  public BsRemote(String host, int port, DatagramChannel sendChannel) {
-    addr = new InetSocketAddress(host, port);
+  /**
+   * constructor.
+   * @param remoteHost remote host
+   * @param remotePort remote port
+   * @param sendChannel send channel
+   */
+  public BsRemote(String remoteHost, int remotePort, DatagramChannel sendChannel) {
+    remoteAddr = new InetSocketAddress(remoteHost, remotePort);
     this.sendChannel = sendChannel;
-    BsLogger.debug(() -> "host:" + sendChannel);
   }
 
-  public void send(byte[] bytes) {
+  /**
+   * send message.
+   * @param bytes message
+   * @throws BsSendException send exception
+   */
+  public void send(byte[] bytes) throws BsSendException {
     try {
-      sendChannel.send(ByteBuffer.wrap(bytes), addr);
-//      BsLogger.debug(() -> "send:" + addr);
+      sendChannel.send(ByteBuffer.wrap(bytes), remoteAddr);
     } catch (IOException e) {
-      e.printStackTrace();
+      BsLogger.error(e);
+      throw new BsSendException(e);
     }
-
   }
 
+  /**
+   * get remote address.
+   * @return remote address
+   */
+  public InetSocketAddress getRemoteAddr() {
+    return remoteAddr;
+  }
+
+  /**
+   * send exception.
+   * @author shigenobu
+   *
+   */
+  public class BsSendException extends Exception {
+
+    /**
+     * version.
+     */
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * constructor.
+     * @param e error
+     */
+    private BsSendException(Throwable e) {
+      super(e);
+    }
+  }
 }

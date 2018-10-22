@@ -5,6 +5,12 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
+/**
+ * date utility.
+ * @author shigenobu
+ * @version 0.0.1
+ *
+ */
 public class BsDate {
 
   static {
