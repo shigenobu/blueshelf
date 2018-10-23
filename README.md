@@ -1,5 +1,9 @@
 # blueshelf - Java NIO Udp server & client 
 
+[![Build Status](https://travis-ci.org/shigenobu/blueshelf.svg?branch=master)](https://travis-ci.org/shigenobu/blueshelf)
+[![Coverage Status](https://coveralls.io/repos/github/shigenobu/blueshelf/badge.svg?branch=master)](https://coveralls.io/github/shigenobu/blueshelf?branch=master)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 ## how to use
 
 ### for server
