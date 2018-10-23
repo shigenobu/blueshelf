@@ -1,5 +1,7 @@
 # blueshelf - Java NIO Udp server & client 
 
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.walksocket/blueshelf/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.walksocket/blueshelf)
+[![Javadoc](https://javadoc-badge.appspot.com/com.walksocket/blueshelf.svg?label=javadoc)](https://javadoc-badge.appspot.com/com.walksocket/blueshelf)
 [![Build Status](https://travis-ci.org/shigenobu/blueshelf.svg?branch=master)](https://travis-ci.org/shigenobu/blueshelf)
 [![Coverage Status](https://coveralls.io/repos/github/shigenobu/blueshelf/badge.svg?branch=master)](https://coveralls.io/github/shigenobu/blueshelf?branch=master)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
