@@ -67,6 +67,14 @@ public class BsRemote {
   }
 
   /**
+   * get remote host and port.
+   * @return host and port
+   */
+  public String getRemoteHostAndPort() {
+    return String.format("%s:%s", remoteAddr.getHostString(), remoteAddr.getPort());
+  }
+
+  /**
    * send exception.
    * @author shigenobu
    *

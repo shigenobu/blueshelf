@@ -138,7 +138,7 @@ public class BsExecutorServer {
               ByteBuffer buffer = ByteBuffer.allocate(readBufferSize);
               InetSocketAddress remoteAddr = (InetSocketAddress) localChannel.receive(buffer);
               BsLogger.debug(() -> String.format(
-                  "server received from %s:%s",
+                  "server received from %s",
                   remoteAddr.getHostString(),
                   remoteAddr.getPort()));
 
