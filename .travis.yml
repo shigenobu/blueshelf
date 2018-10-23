@@ -1,0 +1,17 @@
+language: java
+
+jdk:
+  - openjdk8
+  - openjdk9
+  - oraclejdk8
+  - oraclejdk9
+
+script:
+  - ./gradlew test
+
+after_success:
+  - ./gradlew jacocoTestReport coveralls
+
+env:
+  global:
+    - secure: "Rf4wKwLEKZT4XpzfK/6LPiWPklnnja03UAvvvSPHtAl3qQCbOVIqu/GlSjQ3tzXsl9D9nxLDqofxGKthyc8UNrEdxDkutV8WMiATPPzivnZx6mdbgRyI6GlarvurLX+TzLCJNbksgQimyFlO0Z/YQ4br3x3aVQYV9TOsbWtD31L1RVxUG48CA6mewA76WLqJiOoxDTUtGsSqAJrIMTMw1GqYOqQmiCtejnQbq6ftWKiHts3jv9H9855RhitNbKReUGPeOfxIfZyPFOWwwHVq9Eo7gFJgG/ErEm7hfo5Q4fCO9gEX2sRnGQEutXuQe9Emtz87grNvQ5uwxmW8nsuNjEcXI02Tv0vlBJPevkTmtKP12CeQ0AoF5GXAJIHjeMHRdDeu50VEpkMZFQOC7aV/jFMNeAUKZDXxis6CgnztyjGPzJhfOJwb13THTrnn6kFn9OgdJ5Ny81CNQZp2V7Zt7gKyF6mCZKrD8bgjcAk4pEeR7H4D0G3fWM1e4qicLKs/dnbgpNoJ97A4jT9NHGU5RhrKT8SFMwhGhFjU2RmlUtFdY4zQrhSY6yDPANnahVrv6PwUM1i8QAz/dsTGLgyVhJrwO60ALRQx6/ZvocbwW553y0JVfWAUiArSvCXk2Cr8+fA5U9Fc3W6K41sbzztEly7CAlAvKseUAtot8pCgczI="
