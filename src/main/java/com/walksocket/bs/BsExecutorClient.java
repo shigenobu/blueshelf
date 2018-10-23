@@ -1,6 +1,7 @@
 package com.walksocket.bs;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
@@ -110,7 +111,11 @@ public class BsExecutorClient {
               // receive message
               DatagramChannel localChannel = (DatagramChannel) key.channel();
               ByteBuffer buffer = ByteBuffer.allocate(readBufferSize);
-              localChannel.receive(buffer);
+              InetSocketAddress remoteAddr = (InetSocketAddress) localChannel.receive(buffer);
+              BsLogger.debug(() -> String.format(
+                  "client received from %s:%s",
+                  remoteAddr.getHostString(),
+                  remoteAddr.getPort()));
 
               // execute callback
               buffer.flip();
@@ -146,7 +151,7 @@ public class BsExecutorClient {
     }
 
     try {
-      local.getReceiveChannel().close();
+      local.close();
       selector.close();
     } catch (IOException e) {
       BsLogger.error(e);

@@ -138,7 +138,7 @@ public class BsExecutorServer {
               ByteBuffer buffer = ByteBuffer.allocate(readBufferSize);
               InetSocketAddress remoteAddr = (InetSocketAddress) localChannel.receive(buffer);
               BsLogger.debug(() -> String.format(
-                  "server received from %s",
+                  "server received from %s:%s",
                   remoteAddr.getHostString(),
                   remoteAddr.getPort()));
 
@@ -193,8 +193,8 @@ public class BsExecutorServer {
     }
 
     try {
-      for (DatagramChannel channel : localMaps.keySet()) {
-        channel.close();
+      for (BsLocal local : localMaps.values()) {
+        local.close();
       }
       selector.close();
     } catch (IOException e) {

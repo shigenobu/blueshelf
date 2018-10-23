@@ -56,7 +56,7 @@ public class BsLocal {
   }
 
   /**
-   * setup send channel.
+   * setup send channel called only from BsExecutorServer.
    * <pre>
    *   for server, channels are force to different between receive and send.
    * </pre>
@@ -95,6 +95,26 @@ public class BsLocal {
    */
   InetSocketAddress getLocalAddr() {
     return localAddr;
+  }
+
+  /**
+   * close.
+   */
+  void close() {
+    if (receiveChannel != null && receiveChannel.isOpen()) {
+      try {
+        receiveChannel.close();
+      } catch (IOException e) {
+        BsLogger.error(e);
+      }
+    }
+    if (sendChannel != null && sendChannel.isOpen()) {
+      try {
+        sendChannel.close();
+      } catch (IOException e) {
+        BsLogger.error(e);
+      }
+    }
   }
 
   /**
