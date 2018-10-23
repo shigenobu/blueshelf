@@ -6,6 +6,14 @@
 [![Coverage Status](https://coveralls.io/repos/github/shigenobu/blueshelf/badge.svg?branch=master)](https://coveralls.io/github/shigenobu/blueshelf?branch=master)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+## maven
+
+    <dependency>
+      <groupId>com.walksocket</groupId>
+      <artifactId>blueshelf</artifactId>
+      <version>0.0.1</version>
+    </dependency>
+
 ## how to use
 
 ### for server
