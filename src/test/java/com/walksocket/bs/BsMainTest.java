@@ -157,6 +157,9 @@ public class BsMainTest {
     BsExecutorServer executor4Server = new BsExecutorServer(new BsCallback() {
       @Override
       public void incoming(BsRemote remote, byte[] message) {
+        // set timeout
+        remote.setIdleMilliSeconds(500);
+
         // receive message from client
         BsLogger.debug(String.format("incoming server: %s (remote -> %s)",
             unserialize(message),
@@ -185,8 +188,11 @@ public class BsMainTest {
 
         // send message from client
         try {
+          Thread.sleep(1000);
           remote.send(serialize(new TestMessage(TestMessageType.FROM_CLIENT, "hi, I am client.")));
         } catch (BsRemote.BsSendException e) {
+          e.printStackTrace();
+        } catch (InterruptedException e) {
           e.printStackTrace();
         }
       }
@@ -202,7 +208,7 @@ public class BsMainTest {
 
     // sleep
     try {
-      Thread.sleep(500);
+      Thread.sleep(10000);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }

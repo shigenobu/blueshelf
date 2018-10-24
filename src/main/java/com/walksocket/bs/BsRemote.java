@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
+import java.util.UUID;
 
 /**
  * udp remote configuration.
@@ -24,6 +25,26 @@ public class BsRemote {
   private DatagramChannel sendChannel;
 
   /**
+   * life timestamp milliseconds.
+   */
+  private long lifeTimestampMilliseconds;
+
+  /**
+   * idle milliseconds.
+   */
+  private int idleMilliSeconds = 10000;
+
+  /**
+   * constructor.
+   * @param remoteHost remote host
+   * @param remotePort remote port
+   * @param sendChannel send channel
+   */
+  public BsRemote(String remoteHost, int remotePort, DatagramChannel sendChannel) {
+    this(new InetSocketAddress(remoteHost, remotePort), sendChannel);
+  }
+
+  /**
    * constructor.
    * @param remoteAddr remote address
    * @param sendChannel send channel
@@ -34,14 +55,34 @@ public class BsRemote {
   }
 
   /**
-   * constructor.
-   * @param remoteHost remote host
-   * @param remotePort remote port
-   * @param sendChannel send channel
+   * is timeout.
+   * @return if timeout, true
    */
-  public BsRemote(String remoteHost, int remotePort, DatagramChannel sendChannel) {
-    remoteAddr = new InetSocketAddress(remoteHost, remotePort);
-    this.sendChannel = sendChannel;
+  boolean isTimeout() {
+    return BsDate.timestampMilliseconds() > lifeTimestampMilliseconds;
+  }
+
+  /**
+   * update timeout.
+   */
+  void updateTimeout() {
+    this.lifeTimestampMilliseconds = BsDate.timestampMilliseconds() + idleMilliSeconds;
+  }
+
+  /**
+   * get idle milliseconds.
+   * @return idle milliseconds
+   */
+  public int getIdleMilliSeconds() {
+    return idleMilliSeconds;
+  }
+
+  /**
+   * set idle milliseconds.
+   * @param idleMilliSeconds idle milliseconds
+   */
+  public void setIdleMilliSeconds(int idleMilliSeconds) {
+    this.idleMilliSeconds = idleMilliSeconds;
   }
 
   /**
@@ -72,6 +113,14 @@ public class BsRemote {
    */
   public String getRemoteHostAndPort() {
     return String.format("%s:%s", remoteAddr.getHostString(), remoteAddr.getPort());
+  }
+
+  @Override
+  public String toString() {
+    return String.format(
+        "remoteAddr:%s, sendChannel:%s",
+        remoteAddr,
+        sendChannel);
   }
 
   /**

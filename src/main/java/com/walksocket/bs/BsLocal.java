@@ -98,9 +98,9 @@ public class BsLocal {
   }
 
   /**
-   * close.
+   * destory.
    */
-  void close() {
+  void destory() {
     if (receiveChannel != null && receiveChannel.isOpen()) {
       try {
         receiveChannel.close();
@@ -115,6 +115,15 @@ public class BsLocal {
         BsLogger.error(e);
       }
     }
+  }
+
+  @Override
+  public String toString() {
+    return String.format(
+        "localAddr:%s, receiveChannel:%s, sendChannel:%s",
+        localAddr,
+        receiveChannel,
+        sendChannel);
   }
 
   /**

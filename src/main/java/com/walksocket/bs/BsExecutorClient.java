@@ -33,14 +33,6 @@ public class BsExecutorClient {
   private BsLocal local;
 
   /**
-   * remote.
-   * <pre>
-   *   for client, remote server.
-   * </pre>
-   */
-  private BsRemote remote;
-
-  /**
    * read buffer size.
    */
   private int readBufferSize = 1350;
@@ -67,6 +59,26 @@ public class BsExecutorClient {
   private ExecutorService callbackPool = Executors.newFixedThreadPool(1);
 
   /**
+   * remote manager.
+   */
+  private BsRemoteManagerClient manager;
+
+  /**
+   * shutdown handler.
+   */
+  private final BsShutdown shutdown = new BsShutdown();
+
+  /**
+   * shutdown thread.
+   */
+  private final Thread shutdownThread = new Thread(shutdown);
+
+  /**
+   * in shutdown, custom executor.
+   */
+  private BsShutdownExecutor executor;
+
+  /**
    * constructor.
    * @param callback callback
    * @param local local
@@ -75,7 +87,9 @@ public class BsExecutorClient {
   public BsExecutorClient(BsCallback callback, BsLocal local, BsRemote remote) {
     this.callback = callback;
     this.local = local;
-    this.remote = remote;
+
+    // create manager
+    manager = new BsRemoteManagerClient(remote);
   }
 
   /**
@@ -98,6 +112,14 @@ public class BsExecutorClient {
       throw new BsExecutorClientException(e);
     }
 
+    // set shutdown handler
+    shutdown.setExecutor(executor);
+    Runtime.getRuntime().removeShutdownHook(shutdownThread);
+    Runtime.getRuntime().addShutdownHook(shutdownThread);
+
+    // start manager
+    manager.startServiceTimeout(callback, shutdown);
+
     // execution
     selectorPool.submit(() -> {
       while (true) {
@@ -117,11 +139,19 @@ public class BsExecutorClient {
                   remoteAddr.getHostString(),
                   remoteAddr.getPort()));
 
+              // get remote
+              BsRemote remote = manager.get();
+
               // execute callback
               buffer.flip();
               byte[] data = new byte[buffer.limit()];
               buffer.get(data);
-              callbackPool.submit(() -> callback.incoming(remote, data));
+              callbackPool.submit(() -> {
+                synchronized (remote) {
+                  remote.updateTimeout();
+                  callback.incoming(remote, data);
+                }
+              });
             }
           }
         } catch (IOException e) {
@@ -146,17 +176,26 @@ public class BsExecutorClient {
    * shutdown.
    */
   public void shutdown() {
-    if (selector == null || !selector.isOpen()) {
-      return;
+    // close local
+    if (local != null) {
+      local.destory();
     }
 
-    try {
-      local.close();
-      selector.close();
-    } catch (IOException e) {
-      BsLogger.error(e);
+    // close selector
+    if (selector != null && selector.isOpen()) {
+      try {
+        selector.close();
+      } catch (IOException e) {
+        BsLogger.error(e);
+      }
     }
 
+    // shutdown manager
+    if (manager != null) {
+      manager.shutdownServiceTimeout();
+    }
+
+    // shutdown thread pool
     selectorPool.shutdown();
     callbackPool.shutdown();
 

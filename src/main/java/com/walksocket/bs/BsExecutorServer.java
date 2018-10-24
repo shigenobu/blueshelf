@@ -35,6 +35,11 @@ public class BsExecutorServer {
   private int readBufferSize = 1350;
 
   /**
+   * remote timeout check devide number.
+   */
+  private int devide = 10;
+
+  /**
    * nonblocking channel seletor.
    */
   private Selector selector;
@@ -54,6 +59,26 @@ public class BsExecutorServer {
    * </pre>
    */
   private ExecutorService callbackPool = Executors.newWorkStealingPool();
+
+  /**
+   * remote manager.
+   */
+  private BsRemoteManagerServer manager;
+
+  /**
+   * shutdown handler.
+   */
+  private final BsShutdown shutdown = new BsShutdown();
+
+  /**
+   * shutdown thread.
+   */
+  private final Thread shutdownThread = new Thread(shutdown);
+
+  /**
+   * in shutdown, custom executor.
+   */
+  private BsShutdownExecutor executor;
 
   /**
    * constructor for single port.
@@ -92,6 +117,16 @@ public class BsExecutorServer {
   }
 
   /**
+   * set timeout check devide number.
+   * @param devide timeout check devide number
+   * @return this
+   */
+  public BsExecutorServer devide(int devide) {
+    this.devide = devide;
+    return this;
+  }
+
+  /**
    * set callback pool.
    * @param callbackPool callback pool
    * @return this
@@ -123,6 +158,15 @@ public class BsExecutorServer {
       throw new BsExecutorServerException(e);
     }
 
+    // set shutdown handler
+    shutdown.setExecutor(executor);
+    Runtime.getRuntime().removeShutdownHook(shutdownThread);
+    Runtime.getRuntime().addShutdownHook(shutdownThread);
+
+    // create manager
+    manager = new BsRemoteManagerServer(devide);
+    manager.startServiceTimeout(callback, shutdown);
+
     // execution
     selectorPool.submit(() -> {
       while (true) {
@@ -148,16 +192,23 @@ public class BsExecutorServer {
                 BsLogger.error(localChannel);
                 continue;
               }
-              BsRemote remote = new BsRemote(remoteAddr, local.getSendChannel());
               BsLogger.debug(() -> String.format(
                   "server received port is %s",
                   local.getLocalAddr().getPort()));
+
+              // generate remote
+              BsRemote remote = manager.generate(remoteAddr, local.getSendChannel());
 
               // execute callback
               buffer.flip();
               byte[] data = new byte[buffer.limit()];
               buffer.get(data);
-              callbackPool.submit(() -> callback.incoming(remote, data));
+              callbackPool.submit(() -> {
+                synchronized (remote) {
+                  remote.updateTimeout();
+                  callback.incoming(remote, data);
+                }
+              });
             }
           }
         } catch (IOException e) {
@@ -188,19 +239,28 @@ public class BsExecutorServer {
    * shutdown.
    */
   public void shutdown() {
-    if (selector == null || !selector.isOpen()) {
-      return;
-    }
-
-    try {
+    // close local
+    if (localMaps != null) {
       for (BsLocal local : localMaps.values()) {
-        local.close();
+        local.destory();
       }
-      selector.close();
-    } catch (IOException e) {
-      BsLogger.error(e);
     }
 
+    // close selector
+    if (selector != null && selector.isOpen()) {
+      try {
+        selector.close();
+      } catch (IOException e) {
+        BsLogger.error(e);
+      }
+    }
+
+    // shutdown manage
+    if (manager != null) {
+      manager.shutdownServiceTimeout();
+    }
+
+    // shutdown thread pool
     callbackPool.shutdown();
     selectorPool.shutdown();
 
