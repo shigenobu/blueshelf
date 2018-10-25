@@ -14,6 +14,7 @@ import java.util.TimeZone;
 public class BsDate {
 
   static {
+    // default english
     Locale.setDefault(Locale.ENGLISH);
   }
 

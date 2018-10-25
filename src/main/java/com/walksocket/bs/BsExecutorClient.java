@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 /**
  * udp client.
  * @author shigenobu
- * @version 0.0.1
+ * @version 0.0.2
  *
  */
 public class BsExecutorClient {
@@ -76,7 +76,7 @@ public class BsExecutorClient {
   /**
    * in shutdown, custom executor.
    */
-  private BsShutdownExecutor executor;
+  private BsShutdownExecutor shutdownExecutor;
 
   /**
    * constructor.
@@ -90,6 +90,26 @@ public class BsExecutorClient {
 
     // create manager
     manager = new BsRemoteManagerClient(remote);
+  }
+
+  /**
+   * set read buffer size.
+   * @param readBufferSize read buffer size
+   * @return this
+   */
+  public BsExecutorClient readBufferSize(int readBufferSize) {
+    this.readBufferSize = readBufferSize;
+    return this;
+  }
+
+  /**
+   * set shutdown executor.
+   * @param shutdownExecutor shutdown executor
+   * @return this
+   */
+  public BsExecutorClient shutdownExecutor(BsShutdownExecutor shutdownExecutor) {
+    this.shutdownExecutor = shutdownExecutor;
+    return this;
   }
 
   /**
@@ -113,7 +133,7 @@ public class BsExecutorClient {
     }
 
     // set shutdown handler
-    shutdown.setExecutor(executor);
+    shutdown.setExecutor(shutdownExecutor);
     Runtime.getRuntime().removeShutdownHook(shutdownThread);
     Runtime.getRuntime().addShutdownHook(shutdownThread);
 
@@ -148,8 +168,11 @@ public class BsExecutorClient {
               buffer.get(data);
               callbackPool.submit(() -> {
                 synchronized (remote) {
-                  remote.updateTimeout();
-                  callback.incoming(remote, data);
+                  // if remote is active, invoke incoming
+                  if (remote.isActive()) {
+                    remote.updateTimeout();
+                    callback.incoming(remote, data);
+                  }
                 }
               });
             }
@@ -178,7 +201,7 @@ public class BsExecutorClient {
   public void shutdown() {
     // close local
     if (local != null) {
-      local.destory();
+      local.destroy();
     }
 
     // close selector

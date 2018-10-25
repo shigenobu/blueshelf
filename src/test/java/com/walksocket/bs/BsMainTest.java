@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.concurrent.Executors;
 
 import static org.junit.Assert.*;
 
@@ -173,6 +174,15 @@ public class BsMainTest {
         }
       }
     }, local4Server);
+    executor4Server.devide(1);
+    executor4Server.readBufferSize(128);
+    executor4Server.callbackPool(Executors.newFixedThreadPool(2));
+    executor4Server.shutdownExecutor(new BsShutdownExecutor() {
+      @Override
+      public void execute() {
+        System.out.println("server shutdownExecutor");
+      }
+    });
     executor4Server.start();
 
     // start client
@@ -197,6 +207,13 @@ public class BsMainTest {
         }
       }
     }, local4Client, remote4Client);
+    executor4Client.readBufferSize(128);
+    executor4Client.shutdownExecutor(new BsShutdownExecutor() {
+      @Override
+      public void execute() {
+        System.out.println("client shutdownExecutor");
+      }
+    });
     executor4Client.start();
 
     // send message from client
@@ -208,7 +225,10 @@ public class BsMainTest {
 
     // sleep
     try {
-      Thread.sleep(10000);
+      for (int i = 0; i < 10; i++) {
+        System.out.println("remote count:" + executor4Server.getRemoteCount());
+        Thread.sleep(1000);
+      }
     } catch (InterruptedException e) {
       e.printStackTrace();
     }

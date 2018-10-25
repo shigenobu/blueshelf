@@ -2,6 +2,12 @@ package com.walksocket.bs;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * shutdown handler.
+ * @author shigenobu
+ * @version 0.0.2
+ *
+ */
 public class BsShutdown implements Runnable {
 
   /**
@@ -12,14 +18,14 @@ public class BsShutdown implements Runnable {
   /**
    * in shutdown, custom executor.
    */
-  private BsShutdownExecutor executor;
+  private BsShutdownExecutor shutdownExecutor;
 
   /**
    * set custom executor.
-   * @param executor custom executor.
+   * @param shutdownExecutor custom executor.
    */
-  void setExecutor(BsShutdownExecutor executor) {
-    this.executor = executor;
+  void setExecutor(BsShutdownExecutor shutdownExecutor) {
+    this.shutdownExecutor = shutdownExecutor;
   }
 
   /**
@@ -44,8 +50,8 @@ public class BsShutdown implements Runnable {
     }
 
     // execute
-    if (executor != null) {
-      executor.execute();
+    if (shutdownExecutor != null) {
+      shutdownExecutor.execute();
     }
 
     // end shutdown

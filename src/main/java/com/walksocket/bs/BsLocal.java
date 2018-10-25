@@ -9,7 +9,7 @@ import java.nio.channels.DatagramChannel;
 /**
  * udp local configuration.
  * @author shigenobu
- * @version 0.0.1
+ * @version 0.0.2
  *
  */
 public class BsLocal {
@@ -98,9 +98,9 @@ public class BsLocal {
   }
 
   /**
-   * destory.
+   * destroy.
    */
-  void destory() {
+  void destroy() {
     if (receiveChannel != null && receiveChannel.isOpen()) {
       try {
         receiveChannel.close();

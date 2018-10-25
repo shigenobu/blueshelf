@@ -1,14 +1,23 @@
 package com.walksocket.bs;
 
-import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * remote manager for client.
+ * @author shigenobu
+ * @version 0.0.2
+ *
+ */
 public class BsRemoteManagerClient {
 
+  /**
+   * remote.
+   * <pre>
+   *   Fixed, to server.
+   * </pre>
+   */
   private BsRemote remote;
 
   /**
@@ -16,6 +25,10 @@ public class BsRemoteManagerClient {
    */
   private final ScheduledExecutorService serviceTimeout = Executors.newSingleThreadScheduledExecutor();
 
+  /**
+   * constructor.
+   * @param remote remote
+   */
   BsRemoteManagerClient(BsRemote remote) {
     this.remote = remote;
   }
@@ -36,14 +49,20 @@ public class BsRemoteManagerClient {
             // shutdown
             if (shutdown.inShutdown()) {
               synchronized (remote) {
-                callback.shutdown(remote);
+                // if active, invoke shutdown.
+                if (remote.isActive()) {
+                  remote.setActive(false);
+                  callback.shutdown(remote);
+                }
               }
               return;
             }
 
-            // if remote was timeout, remote is force to timeout
+            // timeout
             synchronized (remote) {
-              if (remote.isTimeout()) {
+              // if already timeout and active, invoke timeout.
+              if (remote.isTimeout() && remote.isActive()) {
+                remote.setActive(false);
                 callback.timeout(remote);
               }
             }
@@ -51,12 +70,19 @@ public class BsRemoteManagerClient {
         }, start, offset, TimeUnit.MILLISECONDS);
   }
 
+  /**
+   * shutdown service timeout.
+   */
   void shutdownServiceTimeout() {
     if (!serviceTimeout.isShutdown()) {
       serviceTimeout.shutdown();
     }
   }
 
+  /**
+   * get remote.
+   * @return remote.
+   */
   BsRemote get() {
     return remote;
   }

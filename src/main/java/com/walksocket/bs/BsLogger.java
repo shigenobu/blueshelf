@@ -10,7 +10,6 @@ import java.util.function.Supplier;
  */
 public class BsLogger {
 
-
   /**
    * verbose.
    */

@@ -4,12 +4,11 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
-import java.util.UUID;
 
 /**
  * udp remote configuration.
  * @author shigenobu
- * @version 0.0.1
+ * @version 0.0.2
  *
  */
 public class BsRemote {
@@ -33,6 +32,14 @@ public class BsRemote {
    * idle milliseconds.
    */
   private int idleMilliSeconds = 10000;
+
+  /**
+   * active flag.
+   * <pre>
+   *   timeout or shutdown callback was invoked, set false.
+   * </pre>
+   */
+  private boolean active = true;
 
   /**
    * constructor.
@@ -75,6 +82,22 @@ public class BsRemote {
    */
   public int getIdleMilliSeconds() {
     return idleMilliSeconds;
+  }
+
+  /**
+   * set active.
+   * @param active active flag
+   */
+  void setActive(boolean active) {
+    this.active = active;
+  }
+
+  /**
+   * is active.
+   * @return active
+   */
+  boolean isActive() {
+    return active;
   }
 
   /**

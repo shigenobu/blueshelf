@@ -11,7 +11,7 @@ import java.util.concurrent.Executors;
 /**
  * udp server.
  * @author shigenobu
- * @version 0.0.1
+ * @version 0.0.2
  *
  */
 public class BsExecutorServer {
@@ -78,7 +78,7 @@ public class BsExecutorServer {
   /**
    * in shutdown, custom executor.
    */
-  private BsShutdownExecutor executor;
+  private BsShutdownExecutor shutdownExecutor;
 
   /**
    * constructor for single port.
@@ -137,6 +137,16 @@ public class BsExecutorServer {
   }
 
   /**
+   * set shutdown executor.
+   * @param shutdownExecutor shutdown executor
+   * @return this
+   */
+  public BsExecutorServer shutdownExecutor(BsShutdownExecutor shutdownExecutor) {
+    this.shutdownExecutor = shutdownExecutor;
+    return this;
+  }
+
+  /**
    * start
    * @throws BsExecutorServerException server exception.
    */
@@ -159,7 +169,7 @@ public class BsExecutorServer {
     }
 
     // set shutdown handler
-    shutdown.setExecutor(executor);
+    shutdown.setExecutor(shutdownExecutor);
     Runtime.getRuntime().removeShutdownHook(shutdownThread);
     Runtime.getRuntime().addShutdownHook(shutdownThread);
 
@@ -205,8 +215,11 @@ public class BsExecutorServer {
               buffer.get(data);
               callbackPool.submit(() -> {
                 synchronized (remote) {
-                  remote.updateTimeout();
-                  callback.incoming(remote, data);
+                  // if remote is active, invoke incoming
+                  if (remote.isActive()) {
+                    remote.updateTimeout();
+                    callback.incoming(remote, data);
+                  }
                 }
               });
             }
@@ -242,7 +255,7 @@ public class BsExecutorServer {
     // close local
     if (localMaps != null) {
       for (BsLocal local : localMaps.values()) {
-        local.destory();
+        local.destroy();
       }
     }
 
@@ -265,6 +278,17 @@ public class BsExecutorServer {
     selectorPool.shutdown();
 
     BsLogger.info("server shutdown");
+  }
+
+  /**
+   * get remote count.
+   * @return remote count.
+   */
+  public long getRemoteCount() {
+    if (manager == null) {
+      return 0L;
+    }
+    return manager.getRemoteCount();
   }
 
   /**
