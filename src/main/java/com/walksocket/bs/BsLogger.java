@@ -5,10 +5,10 @@ import java.util.function.Supplier;
 /**
  * logger for stdout.
  * @author shigenobu
- * @version 0.0.1
+ * @version 0.0.3
  *
  */
-public class BsLogger {
+public final class BsLogger {
 
   /**
    * verbose.
