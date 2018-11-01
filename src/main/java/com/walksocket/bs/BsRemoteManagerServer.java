@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * remote manager for server.
  * @author shigenobu
- * @version 0.0.2
+ * @version 0.0.4
  *
  */
 class BsRemoteManagerServer {
@@ -100,12 +100,11 @@ class BsRemoteManagerServer {
                     if (remote.isActive()) {
                       remote.setActive(false);
                       callback.shutdown(remote);
-
-                      if (remotes.get(no).remove(remoteAddr) != null) {
-                        // decrement
-                        remoteCount.decrementAndGet();
-                        BsLogger.debug(() -> String.format("By shutdown, removed remote:%s", remote));
-                      }
+                    }
+                    if (remotes.get(no).remove(remoteAddr) != null) {
+                      // decrement
+                      remoteCount.decrementAndGet();
+                      BsLogger.debug(() -> String.format("By shutdown, removed remote:%s", remote));
                     }
                   }
                 });
@@ -126,12 +125,11 @@ class BsRemoteManagerServer {
                 if (remote.isTimeout() && remote.isActive()) {
                   remote.setActive(false);
                   callback.timeout(remote);
-
-                  if (remotes.get(no).remove(remoteAddr) != null) {
-                    // decrement
-                    remoteCount.decrementAndGet();
-                    BsLogger.debug(() -> String.format("By timeout, removed remote:%s", remote));
-                  }
+                }
+                if (remotes.get(no).remove(remoteAddr) != null) {
+                  // decrement
+                  remoteCount.decrementAndGet();
+                  BsLogger.debug(() -> String.format("By timeout, removed remote:%s", remote));
                 }
               }
             });

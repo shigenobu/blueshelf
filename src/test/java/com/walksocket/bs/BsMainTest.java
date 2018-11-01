@@ -6,6 +6,7 @@ import org.junit.Test;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.TimeZone;
 import java.util.concurrent.Executors;
 
@@ -75,76 +76,102 @@ public class BsMainTest {
     BsDate.setTimeZone(TimeZone.getTimeZone("Asia/Tokyo"));
   }
 
-//  @Test
-//  public void testSerialize() {
-//    byte[] data = serialize(new TestMessage(TestMessageType.FROM_CLIENT, "hi, I am client."));
-//    BsLogger.debug(unserialize(data));
-//  }
+  @Test
+  public void testSerialize() {
+    byte[] data = serialize(new TestMessage(TestMessageType.FROM_CLIENT, "hi, I am client."));
+    BsLogger.debug(unserialize(data));
+  }
 
-//  @Test
-//  public void testExample() throws
-//      BsLocal.BsLocalException, BsExecutorClient.BsExecutorClientException, BsExecutorServer.BsExecutorServerException {
-//    // start server
-//    BsLocal local4Server = new BsLocal("0.0.0.0", 8710);
-//    BsExecutorServer executor4Server = new BsExecutorServer(new BsCallback() {
-//      @Override
-//      public void incoming(BsRemote remote, byte[] message) {
-//        // receive message from client
-//        System.out.println(String.format("incoming server: %s (remote -> %s)",
-//            new String(message),
-//            remote.getRemoteHostAndPort()));
-//
-//        // send message from server
-//        try {
-//          remote.send("hi, I am server.".getBytes());
-//        } catch (BsRemote.BsSendException e) {
-//          e.printStackTrace();
-//        }
-//      }
-//    }, local4Server);
-//    executor4Server.start();
-//
-//    // start client
-//    BsLocal local4Client = new BsLocal("0.0.0.0", 18710);
-//    BsRemote remote4Client = new BsRemote("127.0.0.1", 8710, local4Client.getSendChannel());
-//    BsExecutorClient executor4Client = new BsExecutorClient(new BsCallback() {
-//      @Override
-//      public void incoming(BsRemote remote, byte[] message) {
-//        // receive message from server
-//        System.out.println(String.format("incoming client: %s (remote -> %s)",
-//            new String(message),
-//            remote.getRemoteHostAndPort()));
-//
-//        // send message from client
-//        try {
-//          remote.send("hi, I am client.".getBytes());
-//        } catch (BsRemote.BsSendException e) {
-//          e.printStackTrace();
-//        }
-//      }
-//    }, local4Client, remote4Client);
-//    executor4Client.start();
-//
-//    // send message from client
-//    try {
-//      remote4Client.send("hello from client.".getBytes());
-//    } catch (BsRemote.BsSendException e) {
-//      e.printStackTrace();
-//    }
-//
-//    // sleep
-//    try {
-//      Thread.sleep(500);
-//    } catch (InterruptedException e) {
-//      e.printStackTrace();
-//    }
-//
-//    // shutdown client
-//    executor4Client.shutdown();
-//
-//    // shutdown server
-//    executor4Server.shutdown();
-//  }
+  @Test
+  public void testExample() throws
+      BsLocal.BsLocalException, BsExecutorClient.BsExecutorClientException, BsExecutorServer.BsExecutorServerException {
+    // start server
+    BsLocal local4Server = new BsLocal("0.0.0.0", 8710);
+    BsExecutorServer executor4Server = new BsExecutorServer(new BsCallback() {
+      @Override
+      public void incoming(BsRemote remote, byte[] message) {
+        // receive message from client
+        System.out.println(String.format("incoming server: %s (remote -> %s)",
+            new String(message),
+            remote));
+
+        // get value
+        int cnt = 0;
+        Optional<Integer> opt = remote.getValue("cnt", Integer.class);
+        if (opt.isPresent()) {
+          cnt = opt.get();
+        }
+        remote.setValue("cnt", ++cnt);
+
+        if (cnt < 5) {
+          // send message from server
+          try {
+            remote.send(("hi, I am server. Cnt is " + cnt).getBytes());
+          } catch (BsRemote.BsSendException e) {
+            e.printStackTrace();
+          }
+        } else {
+          // escape
+          remote.escape();
+        }
+      }
+    }, local4Server);
+    executor4Server.start();
+
+    // start client
+    BsLocal local4Client = new BsLocal("0.0.0.0", 18710);
+    BsRemote remote4Client = new BsRemote("127.0.0.1", 8710, local4Client.getSendChannel());
+    BsExecutorClient executor4Client = new BsExecutorClient(new BsCallback() {
+      @Override
+      public void incoming(BsRemote remote, byte[] message) {
+        // receive message from server
+        System.out.println(String.format("incoming client: %s (remote -> %s)",
+            new String(message),
+            remote));
+
+        // get value
+        int cnt = 0;
+        Optional<Integer> opt = remote.getValue("cnt", Integer.class);
+        if (opt.isPresent()) {
+          cnt = opt.get();
+        }
+        remote.setValue("cnt", ++cnt);
+
+        if (cnt < 5) {
+          // send message from client
+          try {
+            remote.send(("hi, I am client. Cnt is " + cnt).getBytes());
+          } catch (BsRemote.BsSendException e) {
+            e.printStackTrace();
+          }
+        } else {
+          // escape
+          remote.escape();
+        }
+      }
+    }, local4Client, remote4Client);
+    executor4Client.start();
+
+    // send message from client
+    try {
+      remote4Client.send("hello from client.".getBytes());
+    } catch (BsRemote.BsSendException e) {
+      e.printStackTrace();
+    }
+
+    // sleep
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+
+    // shutdown client
+    executor4Client.shutdown();
+
+    // shutdown server
+    executor4Server.shutdown();
+  }
 
   @Test
   public void testClientSingleAndServerSingle()

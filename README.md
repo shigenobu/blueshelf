@@ -11,7 +11,7 @@
     <dependency>
       <groupId>com.walksocket</groupId>
       <artifactId>blueshelf</artifactId>
-      <version>0.0.3</version>
+      <version>0.0.4</version>
     </dependency>
 
 ## how to use
@@ -26,13 +26,26 @@
         // receive message from client
         System.out.println(String.format("incoming server: %s (remote -> %s)",
             new String(message),
-            remote.getRemoteHostAndPort()));
+            remote));
 
-        // send message from server
-        try {
-          remote.send("hi, I am server.".getBytes());
-        } catch (BsRemote.BsSendException e) {
-          e.printStackTrace();
+        // get value
+        int cnt = 0;
+        Optional<Integer> opt = remote.getValue("cnt", Integer.class);
+        if (opt.isPresent()) {
+          cnt = opt.get();
+        }
+        remote.setValue("cnt", ++cnt);
+
+        if (cnt < 5) {
+          // send message from server
+          try {
+            remote.send(("hi, I am server. Cnt is " + cnt).getBytes());
+          } catch (BsRemote.BsSendException e) {
+            e.printStackTrace();
+          }
+        } else {
+          // escape
+          remote.escape();
         }
       }
     }, local4Server);
@@ -51,13 +64,26 @@
         // receive message from server
         System.out.println(String.format("incoming client: %s (remote -> %s)",
             new String(message),
-            remote.getRemoteHostAndPort()));
+            remote));
 
-        // send message from client
-        try {
-          remote.send("hi, I am client.".getBytes());
-        } catch (BsRemote.BsSendException e) {
-          e.printStackTrace();
+        // get value
+        int cnt = 0;
+        Optional<Integer> opt = remote.getValue("cnt", Integer.class);
+        if (opt.isPresent()) {
+          cnt = opt.get();
+        }
+        remote.setValue("cnt", ++cnt);
+
+        if (cnt < 5) {
+          // send message from client
+          try {
+            remote.send(("hi, I am client. Cnt is " + cnt).getBytes());
+          } catch (BsRemote.BsSendException e) {
+            e.printStackTrace();
+          }
+        } else {
+          // escape
+          remote.escape();
         }
       }
     }, local4Client, remote4Client);
