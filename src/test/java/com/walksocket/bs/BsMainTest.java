@@ -102,6 +102,7 @@ public class BsMainTest {
           cnt = opt.get();
         }
         remote.setValue("cnt", ++cnt);
+        System.out.println("server cnt:" + cnt);
 
         if (cnt < 5) {
           // send message from server
@@ -120,7 +121,7 @@ public class BsMainTest {
 
     // start client
     BsLocal local4Client = new BsLocal("0.0.0.0", 18710);
-    BsRemote remote4Client = new BsRemote("127.0.0.1", 8710, local4Client.getSendChannel());
+    BsRemote remote4Client = new BsRemote("127.0.0.1", 8710, local4Client.getLocalChannel());
     BsExecutorClient executor4Client = new BsExecutorClient(new BsCallback() {
       @Override
       public void incoming(BsRemote remote, byte[] message) {
@@ -136,6 +137,7 @@ public class BsMainTest {
           cnt = opt.get();
         }
         remote.setValue("cnt", ++cnt);
+        System.out.println("client cnt:" + cnt);
 
         if (cnt < 5) {
           // send message from client
@@ -161,7 +163,7 @@ public class BsMainTest {
 
     // sleep
     try {
-      Thread.sleep(1000);
+      Thread.sleep(12000);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
@@ -214,7 +216,7 @@ public class BsMainTest {
 
     // start client
     BsLocal local4Client = new BsLocal("0.0.0.0", port4Client);
-    BsRemote remote4Client = new BsRemote("127.0.0.1", port4Server, local4Client.getSendChannel());
+    BsRemote remote4Client = new BsRemote("127.0.0.1", port4Server, local4Client.getLocalChannel());
     BsExecutorClient executor4Client = new BsExecutorClient(new BsCallback() {
       @Override
       public void incoming(BsRemote remote, byte[] message) {
@@ -299,7 +301,7 @@ public class BsMainTest {
           } catch (BsLocal.BsLocalException e) {
             e.printStackTrace();
           }
-          BsRemote remote4client = new BsRemote("127.0.0.1", port, local4client.getSendChannel());
+          BsRemote remote4client = new BsRemote("127.0.0.1", port, local4client.getLocalChannel());
           BsExecutorClient executorClient = new BsExecutorClient(new BsCallback() {
             @Override
             public void incoming(BsRemote remote, byte[] message) {

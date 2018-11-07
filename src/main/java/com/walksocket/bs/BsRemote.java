@@ -3,7 +3,6 @@ package com.walksocket.bs;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.DatagramChannel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -12,7 +11,7 @@ import java.util.UUID;
 /**
  * udp remote configuration.
  * @author shigenobu
- * @version 0.0.4
+ * @version 0.0.5
  *
  */
 public class BsRemote {
@@ -28,9 +27,9 @@ public class BsRemote {
   private InetSocketAddress remoteAddr;
 
   /**
-   * udp send channel.
+   * local channel.
    */
-  private DatagramChannel sendChannel;
+  private BsLocalChannel localChannel;
 
   /**
    * life timestamp milliseconds.
@@ -59,21 +58,22 @@ public class BsRemote {
    * constructor.
    * @param remoteHost remote host
    * @param remotePort remote port
-   * @param sendChannel send channel
+   * @param localChannel local channel
    */
-  public BsRemote(String remoteHost, int remotePort, DatagramChannel sendChannel) {
-    this(new InetSocketAddress(remoteHost, remotePort), sendChannel);
+  public BsRemote(String remoteHost, int remotePort, BsLocalChannel localChannel) {
+    this(new InetSocketAddress(remoteHost, remotePort), localChannel);
   }
 
   /**
    * constructor.
    * @param remoteAddr remote address
-   * @param sendChannel send channel
+   * @param localChannel local channel
    */
-  public BsRemote(InetSocketAddress remoteAddr, DatagramChannel sendChannel) {
+  public BsRemote(InetSocketAddress remoteAddr, BsLocalChannel localChannel) {
     this.rid = UUID.randomUUID().toString();
     this.remoteAddr = remoteAddr;
-    this.sendChannel = sendChannel;
+    this.localChannel = localChannel;
+    this.lifeTimestampMilliseconds = BsDate.timestampMilliseconds() + idleMilliSeconds;
   }
 
   /**
@@ -130,7 +130,7 @@ public class BsRemote {
    */
   public void send(byte[] bytes) throws BsSendException {
     try {
-      sendChannel.send(ByteBuffer.wrap(bytes), remoteAddr);
+      localChannel.getChannel().send(ByteBuffer.wrap(bytes), remoteAddr);
     } catch (IOException e) {
       BsLogger.error(e);
       throw new BsSendException(e);
@@ -141,7 +141,7 @@ public class BsRemote {
    * escape.
    */
   public void escape() {
-    active = false;
+    // lifetime is force to set 0
     lifeTimestampMilliseconds = 0;
     BsLogger.debug(() -> String.format("escape %s", this));
   }
@@ -203,10 +203,10 @@ public class BsRemote {
   @Override
   public String toString() {
     return String.format(
-        "rid:%s, remoteAddr:%s, sendChannel:%s",
+        "rid:%s, remoteAddr:%s, channel:%s",
         rid,
         remoteAddr,
-        sendChannel);
+        localChannel.getChannel());
   }
 
   /**

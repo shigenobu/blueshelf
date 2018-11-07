@@ -1,7 +1,6 @@
 package com.walksocket.bs;
 
 import java.net.InetSocketAddress;
-import java.nio.channels.DatagramChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,15 +14,25 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * remote manager for server.
  * @author shigenobu
- * @version 0.0.4
+ * @version 0.0.5
  *
  */
-class BsRemoteManagerServer {
+class BsRemoteManager {
 
   /**
    * remote timeout check devide number.
    */
   private int devide;
+
+  /**
+   * callback.
+   */
+  private BsCallback callback;
+
+  /**
+   * shutdown handler.
+   */
+  private BsShutdown shutdown;
 
   /**
    * remote locks.
@@ -53,9 +62,13 @@ class BsRemoteManagerServer {
   /**
    * constructor.
    * @param devide remote timeout check devide number
+   * @param callback callback for timeout
+   * @param shutdown shutdown executor
    */
-  BsRemoteManagerServer(int devide) {
+  BsRemoteManager(int devide, BsCallback callback, BsShutdown shutdown) {
     this.devide = devide;
+    this.callback = callback;
+    this.shutdown = shutdown;
     this.locks = new ArrayList<>(devide);
     for (int i = 0; i < devide; i++) {
       this.locks.add(new ReentrantLock());
@@ -78,10 +91,8 @@ class BsRemoteManagerServer {
 
   /**
    * start service timeout.
-   * @param callback callback for timeout
-   * @param shutdown shutdown executor
    */
-  void startServiceTimeout(BsCallback callback, BsShutdown shutdown) {
+  void startServiceTimeout() {
     int start = 1000 / devide;
     int offset = 1000 / devide;
     serviceTimeout.scheduleAtFixedRate(
@@ -104,7 +115,7 @@ class BsRemoteManagerServer {
                     if (remotes.get(no).remove(remoteAddr) != null) {
                       // decrement
                       remoteCount.decrementAndGet();
-                      BsLogger.debug(() -> String.format("By shutdown, removed remote:%s", remote));
+                      BsLogger.debug(() -> String.format("By force shutdown, removed remote:%s", remote));
                     }
                   }
                 });
@@ -125,11 +136,12 @@ class BsRemoteManagerServer {
                 if (remote.isTimeout() && remote.isActive()) {
                   remote.setActive(false);
                   callback.timeout(remote);
-                }
-                if (remotes.get(no).remove(remoteAddr) != null) {
-                  // decrement
-                  remoteCount.decrementAndGet();
-                  BsLogger.debug(() -> String.format("By timeout, removed remote:%s", remote));
+
+                  if (remotes.get(no).remove(remoteAddr) != null) {
+                    // decrement
+                    remoteCount.decrementAndGet();
+                    BsLogger.debug(() -> String.format("By timeout, removed remote:%s", remote));
+                  }
                 }
               }
             });
@@ -143,24 +155,59 @@ class BsRemoteManagerServer {
    */
   void shutdownServiceTimeout() {
     if (!serviceTimeout.isShutdown()) {
+      for (int i = 0; i < devide; i++) {
+        final int no = i;
+        locks.get(no).lock();
+        remotes.get(no).forEach((remoteAddr, remote) -> {
+          synchronized (remote) {
+            // if active, invoke shutdown.
+            if (remote.isActive()) {
+              remote.setActive(false);
+              callback.shutdown(remote);
+            }
+            if (remotes.get(no).remove(remoteAddr) != null) {
+              // decrement
+              remoteCount.decrementAndGet();
+              BsLogger.debug(() -> String.format("By normal shutdown, removed remote:%s", remote));
+            }
+          }
+        });
+        locks.get(no).unlock();
+      }
       serviceTimeout.shutdown();
     }
   }
 
   /**
-   * generate remote.
-   * @param remoteAddr remote addr.
-   * @param sendChannel send channel owned by local
-   * @return remote
+   * register remote for client.
+   * @param remote remote
    */
-  BsRemote generate(InetSocketAddress remoteAddr, DatagramChannel sendChannel) {
+  void register(BsRemote remote) {
+    InetSocketAddress remoteAddr = remote.getRemoteAddr();
     int mod = getMod(remoteAddr);
     if (!remotes.get(mod).containsKey(remoteAddr)) {
       locks.get(mod).lock();
-      if (remotes.get(mod).putIfAbsent(remoteAddr, new BsRemote(remoteAddr, sendChannel)) == null) {
+      if (remotes.get(mod).putIfAbsent(remoteAddr, remote) == null) {
+        BsLogger.debug(() -> String.format("register remote:%s", remotes.get(mod).get(remoteAddr)));
+      }
+      locks.get(mod).unlock();
+    }
+  }
+
+  /**
+   * generate remote.
+   * @param remoteAddr remote addr
+   * @param localChannel local channel
+   * @return remote
+   */
+  BsRemote generate(InetSocketAddress remoteAddr, BsLocalChannel localChannel) {
+    int mod = getMod(remoteAddr);
+    if (!remotes.get(mod).containsKey(remoteAddr)) {
+      locks.get(mod).lock();
+      if (remotes.get(mod).putIfAbsent(remoteAddr, new BsRemote(remoteAddr, localChannel)) == null) {
         // increment
         remoteCount.incrementAndGet();
-        BsLogger.debug(() -> String.format("created remote:%s", remotes.get(mod).get(remoteAddr)));
+        BsLogger.debug(() -> String.format("generate remote:%s", remotes.get(mod).get(remoteAddr)));
       }
       locks.get(mod).unlock();
     }

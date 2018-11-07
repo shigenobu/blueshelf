@@ -11,7 +11,7 @@ import java.util.concurrent.Executors;
 /**
  * udp server.
  * @author shigenobu
- * @version 0.0.2
+ * @version 0.0.5
  *
  */
 public class BsExecutorServer {
@@ -63,7 +63,7 @@ public class BsExecutorServer {
   /**
    * remote manager.
    */
-  private BsRemoteManagerServer manager;
+  private BsRemoteManager manager;
 
   /**
    * shutdown handler.
@@ -101,8 +101,7 @@ public class BsExecutorServer {
     this.localMaps = new HashMap<>();
     // multi port listen
     for (BsLocal lcl : locals) {
-      lcl.setupSendChannel();
-      this.localMaps.put(lcl.getReceiveChannel(), lcl);
+      this.localMaps.put(lcl.getLocalChannel().getChannel(), lcl);
     }
   }
 
@@ -174,8 +173,8 @@ public class BsExecutorServer {
     Runtime.getRuntime().addShutdownHook(shutdownThread);
 
     // create manager
-    manager = new BsRemoteManagerServer(devide);
-    manager.startServiceTimeout(callback, shutdown);
+    manager = new BsRemoteManager(devide, callback, shutdown);
+    manager.startServiceTimeout();
 
     // execution
     selectorPool.submit(() -> {
@@ -183,7 +182,7 @@ public class BsExecutorServer {
         try {
           if (selector.select() > 0) {
             Set<SelectionKey> keys = selector.selectedKeys();
-            for(Iterator<SelectionKey> it = keys.iterator(); it.hasNext(); ) {
+            for(Iterator<SelectionKey> it = keys.iterator(); it.hasNext();) {
               SelectionKey key = it.next();
               it.remove();
 
@@ -204,10 +203,10 @@ public class BsExecutorServer {
               }
               BsLogger.debug(() -> String.format(
                   "server received port is %s",
-                  local.getLocalAddr().getPort()));
+                  local.getLocalChannel().getLocalAddr().getPort()));
 
               // generate remote
-              BsRemote remote = manager.generate(remoteAddr, local.getSendChannel());
+              BsRemote remote = manager.generate(remoteAddr, local.getLocalChannel());
 
               // execute callback
               buffer.flip();
@@ -215,8 +214,8 @@ public class BsExecutorServer {
               buffer.get(data);
               callbackPool.submit(() -> {
                 synchronized (remote) {
-                  // if remote is active, invoke incoming
-                  if (remote.isActive()) {
+                  // if remote is active and not timeout, invoke incoming
+                  if (remote.isActive() && !remote.isTimeout()) {
                     remote.updateTimeout();
                     callback.incoming(remote, data);
                   }
@@ -237,8 +236,8 @@ public class BsExecutorServer {
       buffer.append(sep);
       buffer.append(String.format(
           "%s:%s",
-          local.getLocalAddr().getHostString(),
-          local.getLocalAddr().getPort()));
+          local.getLocalChannel().getLocalAddr().getHostString(),
+          local.getLocalChannel().getLocalAddr().getPort()));
       sep = ",";
     }
     BsLogger.info(String.format(
@@ -255,7 +254,7 @@ public class BsExecutorServer {
     // close local
     if (localMaps != null) {
       for (BsLocal local : localMaps.values()) {
-        local.destroy();
+        local.getLocalChannel().destroy();
       }
     }
 

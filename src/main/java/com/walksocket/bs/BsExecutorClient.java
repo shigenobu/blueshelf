@@ -6,7 +6,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -14,7 +16,7 @@ import java.util.concurrent.Executors;
 /**
  * udp client.
  * @author shigenobu
- * @version 0.0.2
+ * @version 0.0.5
  *
  */
 public class BsExecutorClient {
@@ -31,6 +33,14 @@ public class BsExecutorClient {
    * </pre>
    */
   private BsLocal local;
+
+  /**
+   * remotes.
+   * <pre>
+   *   for client, multi remotes.
+   * </pre>
+   */
+  private List<BsRemote> remotes;
 
   /**
    * read buffer size.
@@ -61,7 +71,7 @@ public class BsExecutorClient {
   /**
    * remote manager.
    */
-  private BsRemoteManagerClient manager;
+  private BsRemoteManager manager;
 
   /**
    * shutdown handler.
@@ -85,11 +95,19 @@ public class BsExecutorClient {
    * @param remote remote
    */
   public BsExecutorClient(BsCallback callback, BsLocal local, BsRemote remote) {
+    this(callback, local, Arrays.asList(remote));
+  }
+
+  /**
+   * constructor.
+   * @param callback callback
+   * @param local local
+   * @param remotes remotes
+   */
+  public BsExecutorClient(BsCallback callback, BsLocal local, List<BsRemote> remotes) {
     this.callback = callback;
     this.local = local;
-
-    // create manager
-    manager = new BsRemoteManagerClient(remote);
+    this.remotes = remotes;
   }
 
   /**
@@ -124,8 +142,8 @@ public class BsExecutorClient {
     // open selector
     try {
       selector = Selector.open();
-      if (!local.getReceiveChannel().isRegistered()) {
-        local.getReceiveChannel().register(selector, SelectionKey.OP_READ);
+      if (!local.getLocalChannel().getChannel().isRegistered()) {
+        local.getLocalChannel().getChannel().register(selector, SelectionKey.OP_READ);
       }
     } catch (IOException e) {
       BsLogger.error(e);
@@ -138,7 +156,11 @@ public class BsExecutorClient {
     Runtime.getRuntime().addShutdownHook(shutdownThread);
 
     // start manager
-    manager.startServiceTimeout(callback, shutdown);
+    manager = new BsRemoteManager(1, callback, shutdown);
+    for (BsRemote remote : remotes) {
+      manager.register(remote);
+    }
+    manager.startServiceTimeout();
 
     // execution
     selectorPool.submit(() -> {
@@ -146,7 +168,7 @@ public class BsExecutorClient {
         try {
           if (selector.select() > 0) {
             Set<SelectionKey> keys = selector.selectedKeys();
-            for(Iterator<SelectionKey> it = keys.iterator(); it.hasNext(); ) {
+            for(Iterator<SelectionKey> it = keys.iterator(); it.hasNext();) {
               SelectionKey key = it.next();
               it.remove();
 
@@ -159,8 +181,8 @@ public class BsExecutorClient {
                   remoteAddr.getHostString(),
                   remoteAddr.getPort()));
 
-              // get remote
-              BsRemote remote = manager.get();
+              // generate remote
+              BsRemote remote = manager.generate(remoteAddr, local.getLocalChannel());
 
               // execute callback
               buffer.flip();
@@ -168,8 +190,8 @@ public class BsExecutorClient {
               buffer.get(data);
               callbackPool.submit(() -> {
                 synchronized (remote) {
-                  // if remote is active, invoke incoming
-                  if (remote.isActive()) {
+                  // if remote is active and not timeout, invoke incoming
+                  if (remote.isActive() && !remote.isTimeout()) {
                     remote.updateTimeout();
                     callback.incoming(remote, data);
                   }
@@ -187,8 +209,8 @@ public class BsExecutorClient {
     StringBuffer buffer = new StringBuffer();
     buffer.append(String.format(
         "%s:%s",
-        local.getLocalAddr().getHostString(),
-        local.getLocalAddr().getPort()));
+        local.getLocalChannel().getLocalAddr().getHostString(),
+        local.getLocalChannel().getLocalAddr().getPort()));
     BsLogger.info(String.format(
         "client listen on %s (readBufferSize:%s)",
         buffer.toString(),
@@ -201,7 +223,7 @@ public class BsExecutorClient {
   public void shutdown() {
     // close local
     if (local != null) {
-      local.destroy();
+      local.getLocalChannel().getChannel();
     }
 
     // close selector
