@@ -346,18 +346,18 @@ public class BsMainTest {
   public void testClientMulti() throws BsExecutorClient.BsExecutorClientException, BsLocal.BsLocalException, InterruptedException {
     // for client
     Map<Integer, List<BsRemote>> portMappedClients = new HashMap<>();
-    for (int port : Arrays.asList(18711, 18712, 18713)) {
+    for (int port : Arrays.asList(38711, 38712, 38713)) {
       BsLocal local4client = new BsLocal("0.0.0.0", port);
       List<BsRemote> remotes4Client = new ArrayList<>();
-      if (port == 18711) {
-        remotes4Client.add(new BsRemote("127.0.0.1", 18712, local4client.getLocalChannel()));
-        remotes4Client.add(new BsRemote("127.0.0.1", 18713, local4client.getLocalChannel()));
-      } else if (port == 18712) {
-        remotes4Client.add(new BsRemote("127.0.0.1", 18711, local4client.getLocalChannel()));
-        remotes4Client.add(new BsRemote("127.0.0.1", 18713, local4client.getLocalChannel()));
-      } else if (port == 18713) {
-        remotes4Client.add(new BsRemote("127.0.0.1", 18711, local4client.getLocalChannel()));
-        remotes4Client.add(new BsRemote("127.0.0.1", 18712, local4client.getLocalChannel()));
+      if (port == 38711) {
+        remotes4Client.add(new BsRemote("127.0.0.1", 38712, local4client.getLocalChannel()));
+        remotes4Client.add(new BsRemote("127.0.0.1", 38713, local4client.getLocalChannel()));
+      } else if (port == 38712) {
+        remotes4Client.add(new BsRemote("127.0.0.1", 38711, local4client.getLocalChannel()));
+        remotes4Client.add(new BsRemote("127.0.0.1", 38713, local4client.getLocalChannel()));
+      } else if (port == 38713) {
+        remotes4Client.add(new BsRemote("127.0.0.1", 38711, local4client.getLocalChannel()));
+        remotes4Client.add(new BsRemote("127.0.0.1", 38712, local4client.getLocalChannel()));
       }
       portMappedClients.put(port, remotes4Client);
 
@@ -384,7 +384,5 @@ public class BsMainTest {
         }
       });
     }
-
-    Thread.sleep(50);
   }
 }
