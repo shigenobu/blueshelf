@@ -224,7 +224,7 @@ public class BsExecutorClient {
   public void shutdown() {
     // close local
     if (local != null) {
-      local.getLocalChannel().getChannel();
+      local.getLocalChannel().destroy();
     }
 
     // close selector
