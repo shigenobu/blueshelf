@@ -20,7 +20,7 @@ public interface BsCallback {
    * @param remote remote
    */
   default void timeout(BsRemote remote) {
-    BsLogger.debug(() -> String.format("By timeout, remote:%s", remote));
+    BsLogger.debug(() -> String.format("default timeout, remote:%s", remote));
   }
 
   /**
@@ -28,6 +28,6 @@ public interface BsCallback {
    * @param remote remote
    */
   default void shutdown(BsRemote remote) {
-    BsLogger.debug(() -> String.format("By shutdown, remote:%s", remote));
+    BsLogger.debug(() -> String.format("default shutdown, remote:%s", remote));
   }
 }

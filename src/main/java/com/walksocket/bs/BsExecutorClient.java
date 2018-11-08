@@ -177,9 +177,10 @@ public class BsExecutorClient {
               ByteBuffer buffer = ByteBuffer.allocate(readBufferSize);
               InetSocketAddress remoteAddr = (InetSocketAddress) localChannel.receive(buffer);
               BsLogger.debug(() -> String.format(
-                  "client received from %s:%s",
+                  "client received from %s:%s at %s",
                   remoteAddr.getHostString(),
-                  remoteAddr.getPort()));
+                  remoteAddr.getPort(),
+                  local.getLocalChannel().getLocalAddr().getPort()));
 
               // generate remote
               BsRemote remote = manager.generate(remoteAddr, local.getLocalChannel());

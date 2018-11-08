@@ -190,10 +190,6 @@ public class BsExecutorServer {
               DatagramChannel localChannel = (DatagramChannel) key.channel();
               ByteBuffer buffer = ByteBuffer.allocate(readBufferSize);
               InetSocketAddress remoteAddr = (InetSocketAddress) localChannel.receive(buffer);
-              BsLogger.debug(() -> String.format(
-                  "server received from %s:%s",
-                  remoteAddr.getHostString(),
-                  remoteAddr.getPort()));
 
               // confirm which local binding port was received
               BsLocal local = localMaps.get(localChannel);
@@ -202,7 +198,9 @@ public class BsExecutorServer {
                 continue;
               }
               BsLogger.debug(() -> String.format(
-                  "server received port is %s",
+                  "server received from %s:%s at %s",
+                  remoteAddr.getHostString(),
+                  remoteAddr.getPort(),
                   local.getLocalChannel().getLocalAddr().getPort()));
 
               // generate remote

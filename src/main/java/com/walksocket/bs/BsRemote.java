@@ -163,6 +163,14 @@ public class BsRemote {
   }
 
   /**
+   * get incoming port.
+   * @return incoming port
+   */
+  public int getIncomingPort() {
+    return localChannel.getLocalAddr().getPort();
+  }
+
+  /**
    * set value.
    * @param name your name
    * @param value your valut
@@ -198,7 +206,6 @@ public class BsRemote {
     }
     values.remove(name);
   }
-
 
   @Override
   public String toString() {

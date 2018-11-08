@@ -11,7 +11,7 @@
     <dependency>
       <groupId>com.walksocket</groupId>
       <artifactId>blueshelf</artifactId>
-      <version>0.0.4</version>
+      <version>0.0.5</version>
     </dependency>
 
 ## how to use
@@ -24,9 +24,10 @@
       @Override
       public void incoming(BsRemote remote, byte[] message) {
         // receive message from client
-        System.out.println(String.format("incoming server: %s (remote -> %s)",
+        System.out.println(String.format("incoming server: %s (remote -> %s), port:%s",
             new String(message),
-            remote));
+            remote,
+            remote.getIncomingPort()));
 
         // get value
         int cnt = 0;
@@ -35,6 +36,7 @@
           cnt = opt.get();
         }
         remote.setValue("cnt", ++cnt);
+        System.out.println("server cnt:" + cnt);
 
         if (cnt < 5) {
           // send message from server
@@ -57,7 +59,7 @@
 
     // start client
     BsLocal local4Client = new BsLocal("0.0.0.0", 18710);
-    BsRemote remote4Client = new BsRemote("127.0.0.1", 8710, local4Client.getSendChannel());
+    BsRemote remote4Client = new BsRemote("127.0.0.1", 8710, local4Client.getLocalChannel());
     BsExecutorClient executor4Client = new BsExecutorClient(new BsCallback() {
       @Override
       public void incoming(BsRemote remote, byte[] message) {
@@ -73,6 +75,7 @@
           cnt = opt.get();
         }
         remote.setValue("cnt", ++cnt);
+        System.out.println("client cnt:" + cnt);
 
         if (cnt < 5) {
           // send message from client

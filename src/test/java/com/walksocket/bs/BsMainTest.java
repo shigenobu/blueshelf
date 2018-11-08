@@ -4,10 +4,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.Executors;
 
 import static org.junit.Assert.*;
@@ -91,9 +88,10 @@ public class BsMainTest {
       @Override
       public void incoming(BsRemote remote, byte[] message) {
         // receive message from client
-        System.out.println(String.format("incoming server: %s (remote -> %s)",
+        System.out.println(String.format("incoming server: %s (remote -> %s), port:%s",
             new String(message),
-            remote));
+            remote,
+            remote.getIncomingPort()));
 
         // get value
         int cnt = 0;
@@ -281,6 +279,7 @@ public class BsMainTest {
       @Override
       public void incoming(BsRemote remote, byte[] message) {
         System.out.println("incoming server :" + new String(message));
+        System.out.println("incoming server port :" + remote.getIncomingPort());
         try {
           remote.send("hello from server by incoming".getBytes(StandardCharsets.UTF_8));
         } catch (BsRemote.BsSendException e) {
@@ -343,4 +342,49 @@ public class BsMainTest {
     executorServer.shutdown();
   }
 
+  @Test
+  public void testClientMulti() throws BsExecutorClient.BsExecutorClientException, BsLocal.BsLocalException, InterruptedException {
+    // for client
+    Map<Integer, List<BsRemote>> portMappedClients = new HashMap<>();
+    for (int port : Arrays.asList(18711, 18712, 18713)) {
+      BsLocal local4client = new BsLocal("0.0.0.0", port);
+      List<BsRemote> remotes4Client = new ArrayList<>();
+      if (port == 18711) {
+        remotes4Client.add(new BsRemote("127.0.0.1", 18712, local4client.getLocalChannel()));
+        remotes4Client.add(new BsRemote("127.0.0.1", 18713, local4client.getLocalChannel()));
+      } else if (port == 18712) {
+        remotes4Client.add(new BsRemote("127.0.0.1", 18711, local4client.getLocalChannel()));
+        remotes4Client.add(new BsRemote("127.0.0.1", 18713, local4client.getLocalChannel()));
+      } else if (port == 18713) {
+        remotes4Client.add(new BsRemote("127.0.0.1", 18711, local4client.getLocalChannel()));
+        remotes4Client.add(new BsRemote("127.0.0.1", 18712, local4client.getLocalChannel()));
+      }
+      portMappedClients.put(port, remotes4Client);
+
+      BsExecutorClient executorClient = new BsExecutorClient(new BsCallback() {
+        @Override
+        public void incoming(BsRemote remote, byte[] message) {
+          System.out.println(String.format("incoming (%s) client : %s", remote.getIncomingPort(), new String(message)));
+          try {
+            remote.send("hello from client by incoming".getBytes(StandardCharsets.UTF_8));
+          } catch (BsRemote.BsSendException e) {
+            e.printStackTrace();
+          }
+        }
+      }, local4client, remotes4Client);
+      executorClient.start();
+    }
+
+    for (Map.Entry<Integer, List<BsRemote>> portMappedClient : portMappedClients.entrySet()) {
+      portMappedClient.getValue().forEach(r -> {
+        try {
+          r.send(("I am " + portMappedClient.getKey()).getBytes());
+        } catch (BsRemote.BsSendException e) {
+          e.printStackTrace();
+        }
+      });
+    }
+
+    Thread.sleep(50);
+  }
 }
