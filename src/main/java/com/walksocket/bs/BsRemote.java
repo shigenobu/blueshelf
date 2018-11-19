@@ -11,7 +11,7 @@ import java.util.UUID;
 /**
  * udp remote configuration.
  * @author shigenobu
- * @version 0.0.5
+ * @version 0.0.6
  *
  */
 public class BsRemote {
@@ -129,6 +129,16 @@ public class BsRemote {
    * @throws BsSendException send exception
    */
   public void send(byte[] bytes) throws BsSendException {
+    // if escaped, disallow send
+    if (lifeTimestampMilliseconds == 0) {
+      throw new BsSendException(String.format("remote(%s) is already escaped."));
+    }
+
+    // if not active, disallow send
+    if (!active) {
+      throw new BsSendException(String.format("remote(%s) is not active."));
+    }
+
     try {
       localChannel.getChannel().send(ByteBuffer.wrap(bytes), remoteAddr);
     } catch (IOException e) {
@@ -234,6 +244,14 @@ public class BsRemote {
      */
     private BsSendException(Throwable e) {
       super(e);
+    }
+
+    /**
+     * constructor.
+     * @param message message
+     */
+    private BsSendException(String message) {
+      super(message);
     }
   }
 }

@@ -16,7 +16,7 @@ import java.util.concurrent.Executors;
 /**
  * udp client.
  * @author shigenobu
- * @version 0.0.5
+ * @version 0.0.6
  *
  */
 public class BsExecutorClient {
@@ -135,11 +135,15 @@ public class BsExecutorClient {
    * @throws BsExecutorClientException client exception
    */
   public void start() throws BsExecutorClientException {
-    if (selector != null && selector.isOpen()) {
-      return;
+    // limit remotes size < 256
+    if (remotes.size() > 255) {
+      throw new BsExecutorClientException(String.format("remote size is up to 255."));
     }
 
     // open selector
+    if (selector != null && selector.isOpen()) {
+      return;
+    }
     try {
       selector = Selector.open();
       if (!local.getLocalChannel().getChannel().isRegistered()) {
@@ -265,6 +269,14 @@ public class BsExecutorClient {
      */
     private BsExecutorClientException(IOException e) {
       super(e);
+    }
+
+    /**
+     * constructor.
+     * @param message message
+     */
+    private BsExecutorClientException(String message) {
+      super(message);
     }
   }
 }

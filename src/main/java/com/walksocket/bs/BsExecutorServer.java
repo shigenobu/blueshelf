@@ -99,7 +99,6 @@ public class BsExecutorServer {
   public BsExecutorServer(BsCallback callback, List<BsLocal> locals) throws BsLocal.BsLocalException {
     this.callback = callback;
     this.localMaps = new HashMap<>();
-    // multi port listen
     for (BsLocal lcl : locals) {
       this.localMaps.put(lcl.getLocalChannel().getChannel(), lcl);
     }
@@ -150,11 +149,16 @@ public class BsExecutorServer {
    * @throws BsExecutorServerException server exception.
    */
   public void start() throws BsExecutorServerException {
-    if (selector != null && selector.isOpen()) {
-      return;
+    // multi port listen
+    // limit locals length < 256
+    if (localMaps.size() > 255) {
+      throw new BsExecutorServerException(String.format("listening ports is up to 255."));
     }
 
     // open selector
+    if (selector != null && selector.isOpen()) {
+      return;
+    }
     try {
       selector = Selector.open();
       for (DatagramChannel channel : localMaps.keySet()) {
@@ -305,6 +309,14 @@ public class BsExecutorServer {
      */
     private BsExecutorServerException(IOException e) {
       super(e);
+    }
+
+    /**
+     * constructor.
+     * @param message message
+     */
+    private BsExecutorServerException(String message) {
+      super(message);
     }
   }
 }
