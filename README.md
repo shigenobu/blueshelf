@@ -11,7 +11,7 @@
     <dependency>
       <groupId>com.walksocket</groupId>
       <artifactId>blueshelf</artifactId>
-      <version>0.0.7</version>
+      <version>0.0.8</version>
     </dependency>
 
 ## how to use
