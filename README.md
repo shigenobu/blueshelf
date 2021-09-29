@@ -1,7 +1,6 @@
 # blueshelf - Java NIO Udp server & client 
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.walksocket/blueshelf/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.walksocket/blueshelf)
-[![Javadoc](https://javadoc-badge.appspot.com/com.walksocket/blueshelf.svg?label=javadoc)](https://javadoc-badge.appspot.com/com.walksocket/blueshelf)
 [![Build Status](https://travis-ci.org/shigenobu/blueshelf.svg?branch=develop)](https://travis-ci.org/shigenobu/blueshelf)
 [![Coverage Status](https://coveralls.io/repos/github/shigenobu/blueshelf/badge.svg?branch=develop)](https://coveralls.io/github/shigenobu/blueshelf?branch=develop)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -11,7 +10,7 @@
     <dependency>
       <groupId>com.walksocket</groupId>
       <artifactId>blueshelf</artifactId>
-      <version>0.0.8</version>
+      <version>0.0.9</version>
     </dependency>
 
 ## how to use
