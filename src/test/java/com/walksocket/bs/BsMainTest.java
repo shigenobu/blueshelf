@@ -1,13 +1,11 @@
 package com.walksocket.bs;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.Executors;
-
-import static org.junit.Assert.*;
 
 public class BsMainTest {
 
@@ -67,7 +65,7 @@ public class BsMainTest {
     return new TestMessage(type, say);
   }
 
-  @BeforeClass
+  @BeforeAll
   public static void beforeClass() {
     BsLogger.setVerbose(true);
     BsDate.setTimeZone(TimeZone.getTimeZone("Asia/Tokyo"));
