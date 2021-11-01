@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'com.walksocket'
-version '0.0.9'
+version '0.1.0'
 description 'Java NIO Udp wrapper for server & client.'
 
 compileJava {
