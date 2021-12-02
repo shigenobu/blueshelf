@@ -55,6 +55,11 @@ public class BsRemote {
   private Map<String, Object> values;
 
   /**
+   * newest.
+   */
+  private boolean newest = true;
+
+  /**
    * constructor.
    * @param remoteHost remote host
    * @param remotePort remote port
@@ -81,13 +86,14 @@ public class BsRemote {
    * @return if timeout, true
    */
   boolean isTimeout() {
-    return BsDate.timestampMilliseconds() > lifeTimestampMilliseconds;
+    return !newest && BsDate.timestampMilliseconds() > lifeTimestampMilliseconds;
   }
 
   /**
    * update timeout.
    */
   void updateTimeout() {
+    newest = false;
     this.lifeTimestampMilliseconds = BsDate.timestampMilliseconds() + idleMilliSeconds;
   }
 
@@ -121,6 +127,7 @@ public class BsRemote {
    */
   public void setIdleMilliSeconds(int idleMilliSeconds) {
     this.idleMilliSeconds = idleMilliSeconds;
+    updateTimeout();
   }
 
   /**
